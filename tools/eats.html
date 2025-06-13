@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Roulette</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Using Tailwind for most styles, but keeping a few keyframe/custom styles */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #FF375F, #FF6B6B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .slot-window::before,
+        .slot-window::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 30%; /* Fade effect at top and bottom */
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .slot-window::before {
+            top: 0;
+            background: linear-gradient(to bottom, #111827, transparent); /* Matches bg-gray-900 */
+        }
+
+        .slot-window::after {
+            bottom: 0;
+            background: linear-gradient(to top, #111827, transparent); /* Matches bg-gray-900 */
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .celebrating {
+            animation: pulse 0.5s ease-in-out 3;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white h-screen flex flex-col items-center justify-center overflow-hidden p-4">
+    <div class="text-center w-full max-w-md mx-auto">
+        <h1 class="text-4xl md:text-5xl font-bold gradient-text">Restaurant Roulette</h1>
+        <p class="text-gray-400 mt-2 mb-8">Let fate decide your next meal</p>
+        
+        <div class="bg-gray-800 rounded-2xl p-4 mb-8 shadow-2xl shadow-black/50">
+            <div class="slot-window h-20 overflow-hidden relative bg-black/50 rounded-lg flex items-start justify-center">
+                <!-- Spinning content -->
+                <div class="slot-wrapper" id="slotWrapper">
+                    <!-- Restaurant items will be inserted here by JavaScript -->
+                </div>
+                <!-- Added: Horizontal indicator line -->
+                <div class="absolute top-1/2 left-4 right-4 h-0.5 bg-red-500/80 rounded-full z-20 transform -translate-y-1/2"></div>
+            </div>
+        </div>
+        
+        <button class="spin-button w-full max-w-xs bg-gradient-to-r from-red-500 to-red-600 text-white px-8 py-4 text-lg font-semibold rounded-full cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-red-500/30 focus:outline-none focus:ring-4 focus:ring-red-500/50 disabled:bg-gray-600 disabled:from-gray-600 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none" id="spinButton" onclick="spin()">SPIN</button>
+        
+        <div class="result mt-8 opacity-0 transform translate-y-5 transition-all duration-500" id="result">
+            <p class="result-text text-gray-400 mb-1">Tonight you're eating at</p>
+            <p class="result-restaurant text-3xl font-bold text-red-500" id="resultRestaurant"></p>
+        </div>
+    </div>
+
+    <script>
+        const restaurants = [
+            "Seoul Korean Restaurant", "The Kebab Zone", "MOSU", "Texas Roadhouse", 
+            "Albany Wasabi", "Akanomi", "Sushi Tei", "Kuma Ani", "McDonald's", 
+            "Burger King", "Northeast Chinese", "Domino's", "Taste of Italy", 
+            "Red & Blue", "Lime Leaf", "Five Guys"
+        ];
+
+        let isSpinning = false;
+        const slotWrapper = document.getElementById('slotWrapper');
+        const spinButton = document.getElementById('spinButton');
+        const result = document.getElementById('result');
+        const resultRestaurant = document.getElementById('resultRestaurant');
+        
+        let ITEM_HEIGHT = 80; // Corresponds to Tailwind's h-20 (80px)
+        const REELS_COUNT = 10; 
+
+        function initializeSlot() {
+            slotWrapper.innerHTML = '';
+            for (let i = 0; i < REELS_COUNT; i++) {
+                restaurants.forEach(restaurant => {
+                    const item = document.createElement('div');
+                    item.className = 'restaurant-item h-20 flex items-center justify-center text-2xl font-medium px-5 whitespace-nowrap';
+                    item.textContent = restaurant;
+                    slotWrapper.appendChild(item);
+                });
+            }
+        }
+
+        function spin() {
+            if (isSpinning) return;
+            
+            isSpinning = true;
+            spinButton.disabled = true;
+            spinButton.textContent = 'SPINNING...';
+            result.classList.remove('opacity-100', 'translate-y-0');
+            result.classList.add('opacity-0', 'translate-y-5');
+            
+            const randomIndex = Math.floor(Math.random() * restaurants.length);
+            
+            const itemsInReel = restaurants.length;
+            const currentPositionStyle = window.getComputedStyle(slotWrapper).transform;
+            const matrix = new DOMMatrix(currentPositionStyle);
+            const currentPosition = matrix.m42;
+            const currentItemIndex = Math.round(Math.abs(currentPosition) / ITEM_HEIGHT);
+            const currentReel = Math.floor(currentItemIndex / itemsInReel);
+            
+            const cycles = 3; 
+            const targetReel = currentReel + cycles;
+            const finalIndex = targetReel * itemsInReel + randomIndex;
+            const finalPosition = -(finalIndex * ITEM_HEIGHT);
+            
+            // Re-apply the transition for the spin
+            slotWrapper.style.transition = 'transform 7s cubic-bezier(0.25, 1, 0.5, 1)';
+            
+            // THE FIX: Use requestAnimationFrame to ensure the transform is applied
+            // after the transition has been set by the browser. This prevents the
+            // animation from being skipped on subsequent spins.
+            requestAnimationFrame(() => {
+                slotWrapper.style.transform = `translateY(${finalPosition}px)`;
+            });
+            
+            // This timeout must match the transition duration in the CSS
+            setTimeout(() => {
+                isSpinning = false;
+                spinButton.disabled = false;
+                spinButton.textContent = 'SPIN AGAIN';
+                
+                resultRestaurant.textContent = restaurants[randomIndex];
+                result.classList.remove('opacity-0', 'translate-y-5');
+                result.classList.add('opacity-100', 'translate-y-0');
+                
+                resultRestaurant.classList.add('celebrating');
+                setTimeout(() => resultRestaurant.classList.remove('celebrating'), 1500);
+
+                // Silently reset the reel to an earlier equivalent position for the next spin
+                const resetReel = 2;
+                const resetIndex = (resetReel * itemsInReel) + randomIndex;
+                const resetPosition = -(resetIndex * ITEM_HEIGHT);
+
+                setTimeout(() => {
+                    // Temporarily remove the transition for the instantaneous reset
+                    slotWrapper.style.transition = 'none';
+                    slotWrapper.style.transform = `translateY(${resetPosition}px)`;
+                }, 500);
+
+            }, 7000); // Match the 7s animation duration
+        }
+
+        // Initialize the roulette on page load
+        initializeSlot();
+        
+        // Dynamically get the true item height to ensure calculations are accurate
+        const firstItem = slotWrapper.querySelector('.restaurant-item');
+        if (firstItem) {
+            ITEM_HEIGHT = firstItem.offsetHeight;
+        }
+    </script>
+</body>
+</html>
