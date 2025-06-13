@@ -390,11 +390,155 @@
         @keyframes coinSpin {
             0% { transform: rotateY(0deg); }
             100% { transform: rotateY(360deg); }
-        }
-
-        @keyframes jackpotPulse {
+        }        @keyframes jackpotPulse {
             0% { transform: scale(1); }
             100% { transform: scale(1.05); }
+        }
+
+        /* 酷炫获胜动画特效 */
+        .celebration-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .celebration-overlay.active {
+            opacity: 1;
+        }
+
+        .fireworks {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: firework 1.5s ease-out forwards;
+        }
+
+        @keyframes firework {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            animation: confetti-fall 3s linear forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .win-flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+            animation: flash 0.5s ease-out;
+        }
+
+        @keyframes flash {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .coin-shower {
+            position: absolute;
+            font-size: 24px;
+            animation: coin-fall 2s ease-out forwards;
+        }
+
+        @keyframes coin-fall {
+            0% {
+                transform: translateY(-50px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(200px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .winning-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: 800;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            animation: winning-bounce 1s ease-out forwards;
+            z-index: 1001;
+        }
+
+        @keyframes winning-bounce {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .reel.mega-win {
+            animation: mega-glow 1s ease-in-out infinite;
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 20px #ffd700, inset 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        @keyframes mega-glow {
+            0%, 100% { 
+                box-shadow: 0 0 20px #ffd700, inset 0 0 20px rgba(255, 215, 0, 0.3);
+                border-color: #ffd700;
+            }
+            50% { 
+                box-shadow: 0 0 40px #ffd700, inset 0 0 30px rgba(255, 215, 0, 0.5);
+                border-color: #ffed4e;
+            }
+        }
+
+        .screen-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+            20%, 40%, 60%, 80% { transform: translateX(2px); }
         }
 
         @media (max-width: 480px) {
@@ -426,10 +570,12 @@
                 flex-wrap: wrap;
                 gap: 10px;
             }
-        }
-    </style>
+        }    </style>
 </head>
 <body>
+    <!-- 庆祝特效容器 -->
+    <div class="celebration-overlay" id="celebrationOverlay"></div>
+    
     <button class="back-button" onclick="window.location.href='../index.html'">← Back</button>
     
     <div class="game-container">
@@ -716,9 +862,7 @@
                 };
             }
             return { isWin: false, payout: 0 };
-        }
-
-        // Show result message
+        }        // Show result message
         function showResult(message, type) {
             const resultMessage = document.getElementById('resultMessage');
             resultMessage.textContent = message;
@@ -726,6 +870,146 @@
             
             setTimeout(() => {
                 resultMessage.classList.remove('show');
+            }, 3000);
+        }
+
+        // 创建烟花特效
+        function createFireworks() {
+            const overlay = document.getElementById('celebrationOverlay');
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd', '#98d8c8'];
+            
+            for (let i = 0; i < 15; i++) {
+                setTimeout(() => {
+                    const firework = document.createElement('div');
+                    firework.className = 'fireworks';
+                    firework.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    firework.style.left = Math.random() * 100 + '%';
+                    firework.style.top = Math.random() * 100 + '%';
+                    firework.style.boxShadow = `0 0 6px ${firework.style.background}`;
+                    overlay.appendChild(firework);
+                    
+                    setTimeout(() => firework.remove(), 1500);
+                }, i * 100);
+            }
+        }
+
+        // 创建彩纸特效
+        function createConfetti() {
+            const overlay = document.getElementById('celebrationOverlay');
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.animationDelay = Math.random() * 2 + 's';
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    overlay.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 5000);
+                }, i * 50);
+            }
+        }
+
+        // 创建金币雨特效
+        function createCoinShower() {
+            const overlay = document.getElementById('celebrationOverlay');
+            const coinEmojis = ['🪙', '💰', '💎', '⭐'];
+            
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const coin = document.createElement('div');
+                    coin.className = 'coin-shower';
+                    coin.textContent = coinEmojis[Math.floor(Math.random() * coinEmojis.length)];
+                    coin.style.left = Math.random() * 100 + '%';
+                    coin.style.animationDelay = Math.random() * 1 + 's';
+                    overlay.appendChild(coin);
+                    
+                    setTimeout(() => coin.remove(), 3000);
+                }, i * 100);
+            }
+        }
+
+        // 创建闪光特效
+        function createWinFlash() {
+            const gameContainer = document.querySelector('.game-container');
+            const flash = document.createElement('div');
+            flash.className = 'win-flash';
+            gameContainer.appendChild(flash);
+            
+            setTimeout(() => flash.remove(), 500);
+        }
+
+        // 创建获胜文字特效
+        function createWinningText(text) {
+            const overlay = document.getElementById('celebrationOverlay');
+            const winText = document.createElement('div');
+            winText.className = 'winning-text';
+            winText.textContent = text;
+            overlay.appendChild(winText);
+            
+            setTimeout(() => {
+                winText.style.opacity = '0';
+                winText.style.transform = 'translate(-50%, -50%) scale(0.5)';
+                winText.style.transition = 'all 0.5s ease-out';
+                setTimeout(() => winText.remove(), 500);
+            }, 2000);
+        }
+
+        // 震动屏幕特效
+        function shakeScreen() {
+            document.body.classList.add('screen-shake');
+            setTimeout(() => {
+                document.body.classList.remove('screen-shake');
+            }, 500);
+        }
+
+        // 播放庆祝特效
+        function playCelebrationEffects(winType, payout) {
+            const overlay = document.getElementById('celebrationOverlay');
+            overlay.classList.add('active');
+            
+            // 根据不同的获胜类型播放不同强度的特效
+            if (winType === 'jackpot') {
+                // 大奖特效 - 最震撼
+                shakeScreen();
+                createWinFlash();
+                createFireworks();
+                createConfetti();
+                createCoinShower();
+                createWinningText('🎆 JACKPOT! 🎆');
+                
+                // 为转轮添加超级发光效果
+                const reels = document.querySelectorAll('.reel');
+                reels.forEach(reel => {
+                    reel.classList.add('mega-win');
+                    setTimeout(() => reel.classList.remove('mega-win'), 3000);
+                });
+                
+            } else if (payout >= 100) {
+                // 大赢特效
+                createWinFlash();
+                createFireworks();
+                createCoinShower();
+                createWinningText('🎉 BIG WIN! 🎉');
+                
+            } else if (payout >= 50) {
+                // 中等赢钱特效
+                createFireworks();
+                createCoinShower();
+                createWinningText('💰 NICE WIN! 💰');
+                
+            } else if (payout > 0) {
+                // 小赢特效
+                createCoinShower();
+                createWinningText('⭐ WIN! ⭐');
+            }
+            
+            // 3秒后隐藏特效覆盖层
+            setTimeout(() => {
+                overlay.classList.remove('active');
             }, 3000);
         }
 
@@ -816,8 +1100,7 @@
                     
                     // Check for win
                     const result = checkWin(results[0], results[1], results[2]);
-                    
-                    if (result.isWin) {
+                      if (result.isWin) {
                         gameState.totalWins++;
                         gameState.balance += result.payout;
                         gameState.totalWonAmount += result.payout;
@@ -827,13 +1110,27 @@
                         
                         let message = `🎉 WIN! +${result.payout} coins`;
                         let messageType = 'win';
+                        let celebrationType = 'normal';
                         
                         if (results[0].symbol === '🍎') {
                             message = `🎆 JACKPOT! +${result.payout} coins! 🎆`;
                             messageType = 'jackpot';
+                            celebrationType = 'jackpot';
+                        } else if (result.payout >= 100) {
+                            message = `🎉 BIG WIN! +${result.payout} coins! 🎉`;
+                            celebrationType = 'big';
+                        } else if (result.payout >= 50) {
+                            message = `💰 NICE WIN! +${result.payout} coins! 💰`;
+                            celebrationType = 'nice';
                         }
                         
                         showResult(message, messageType);
+                        
+                        // 播放酷炫庆祝特效
+                        setTimeout(() => {
+                            playCelebrationEffects(celebrationType, result.payout);
+                        }, 200);
+                        
                     } else {
                         const loseMessages = [
                             'Try again! 🎯',
